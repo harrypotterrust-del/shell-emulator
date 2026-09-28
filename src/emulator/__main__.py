@@ -1,16 +1,16 @@
 """Точка входа эмулятора: ``python -m emulator``."""
 
+import contextlib
+import importlib
 import sys
 
 from emulator.shell import Shell
 
 
 def enable_line_editing():
-    """Включить стрелки и историю ввода, если доступен модуль readline."""
-    try:
-        import readline  # noqa: F401
-    except ImportError:
-        pass
+    """Подключить readline: стрелки и история ввода, если модуль есть."""
+    with contextlib.suppress(ImportError):
+        importlib.import_module("readline")
 
 
 def main():
