@@ -1,0 +1,14 @@
+flake8==7.4.1
+flake8-docstrings==1.7.0
+flake8-functions==0.1.0
+iniconfig==2.3.0
+mccabe==0.7.0
+packaging==26.3
+pep8-naming==0.15.1
+pluggy==1.6.0
+pycodestyle==2.15.0
+pydocstyle==6.3.0
+pyflakes==4.0.0
+Pygments==2.21.0
+pytest==9.1.1
+snowballstemmer==3.1.1
