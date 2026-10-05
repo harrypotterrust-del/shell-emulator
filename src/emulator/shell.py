@@ -22,13 +22,15 @@ def short_hostname():
 class Shell:
     """Эмулятор командной оболочки UNIX-подобной ОС."""
 
-    def __init__(self, env=None, out=None, err=None):
+    def __init__(self, env=None, out=None, err=None, config=None):
         """Создать оболочку.
 
         ``env`` — переменные окружения (по умолчанию — реальные из ОС),
-        ``out`` и ``err`` — потоки для вывода и сообщений об ошибках.
+        ``out`` и ``err`` — потоки для вывода и сообщений об ошибках,
+        ``config`` — параметры запуска эмулятора.
         """
         self.env = dict(os.environ) if env is None else env
+        self.config = config
         self.out = out if out is not None else sys.stdout
         self.err = err if err is not None else sys.stderr
         self.user = getpass.getuser()
@@ -43,11 +45,11 @@ class Shell:
 
     def write(self, text):
         """Вывести текст команды в стандартный вывод."""
-        print(text, file=self.out)
+        print(text, file=self.out, flush=True)
 
     def error(self, message):
         """Вывести сообщение об ошибке в поток ошибок."""
-        print(message, file=self.err)
+        print(message, file=self.err, flush=True)
 
     def execute(self, line):
         """Выполнить одну строку ввода.
