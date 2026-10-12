@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+from typing import Optional
 
 NOT_SET = "(не задан)"
 CONFIG_HEADER = "=== Параметры эмулятора ==="
@@ -12,8 +13,8 @@ CONFIG_FOOTER = "=" * len(CONFIG_HEADER)
 class Config:
     """Параметры командной строки эмулятора."""
 
-    vfs_path: str | None = None
-    script_path: str | None = None
+    vfs_path: Optional[str] = None
+    script_path: Optional[str] = None
 
 
 def build_parser():
