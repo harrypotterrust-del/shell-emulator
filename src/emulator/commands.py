@@ -1,9 +1,11 @@
 """Встроенные команды эмулятора.
 
-Каждая команда — функция ``(shell, args) -> str``: получает экземпляр
+Каждая команда - функция ``(shell, args) -> str``: получает экземпляр
 оболочки и список аргументов, возвращает текст для вывода. Об ошибке
 команда сообщает исключением ``CommandError``.
 """
+
+from emulator.vfs import format_tree
 
 MAX_CD_ARGS = 1
 MAX_EXIT_ARGS = 1
@@ -54,8 +56,18 @@ def cmd_exit(shell, args):
     raise ExitRequest(code)
 
 
+def cmd_vfs_tree(shell, args):
+    """Служебная команда: показать дерево загруженной VFS."""
+    if args:
+        raise CommandError("too many arguments")
+    if shell.vfs is None:
+        raise CommandError("VFS не загружена")
+    return format_tree(shell.vfs)
+
+
 COMMANDS = {
     "ls": cmd_ls,
     "cd": cmd_cd,
     "exit": cmd_exit,
+    "vfs-tree": cmd_vfs_tree,
 }

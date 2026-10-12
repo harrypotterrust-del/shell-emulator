@@ -60,6 +60,6 @@ def test_empty_line():
 
 @pytest.mark.parametrize("line", BAD_LINES)
 def test_syntax_errors(line):
-    """Незакрытые кавычки и неверные подстановки — ошибка разбора."""
+    """Незакрытые кавычки и неверные подстановки - ошибка разбора."""
     with pytest.raises(ParseError):
         parse(line, ENV)

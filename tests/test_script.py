@@ -41,7 +41,7 @@ def test_error_line_is_skipped(tmp_path):
 
 
 def test_skip_notice_uses_real_line_number(tmp_path):
-    """Номер в сообщении — настоящий номер строки файла."""
+    """Номер в сообщении - настоящий номер строки файла."""
     shell = make_shell()
     path = write_script(tmp_path, "# комментарий\n\nls ok\ncd a b\n")
     run_script(shell, path)
@@ -67,7 +67,7 @@ def test_exit_stops_script(tmp_path):
 
 
 def test_missing_file_reports_error(tmp_path):
-    """Несуществующий скрипт — сообщение об ошибке без исключения."""
+    """Несуществующий скрипт - сообщение об ошибке без исключения."""
     shell = make_shell()
     assert not run_script(shell, str(tmp_path / MISSING))
     assert MISSING in shell.err.getvalue()

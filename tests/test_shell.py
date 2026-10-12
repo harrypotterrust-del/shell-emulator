@@ -28,7 +28,7 @@ def test_stub_prints_name_and_args():
 
 
 def test_unknown_command():
-    """Неизвестная команда — ошибка с кодом 127."""
+    """Неизвестная команда - ошибка с кодом 127."""
     shell = make_shell()
     assert not shell.execute("foo bar")
     assert shell.err.getvalue() == "foo: command not found\n"
@@ -36,7 +36,7 @@ def test_unknown_command():
 
 
 def test_cd_too_many_args():
-    """Для cd больше одного аргумента — ошибка."""
+    """Для cd больше одного аргумента - ошибка."""
     shell = make_shell()
     assert not shell.execute("cd a b")
     assert shell.err.getvalue() == "cd: too many arguments\n"
@@ -44,7 +44,7 @@ def test_cd_too_many_args():
 
 
 def test_syntax_error():
-    """Незакрытая кавычка — синтаксическая ошибка."""
+    """Незакрытая кавычка - синтаксическая ошибка."""
     shell = make_shell()
     assert not shell.execute("ls 'abc")
     assert shell.err.getvalue().startswith("syntax error")
@@ -59,7 +59,7 @@ def test_exit_with_code():
 
 
 def test_exit_bad_argument():
-    """Нечисловой аргумент exit — ошибка, оболочка продолжает работу."""
+    """Нечисловой аргумент exit - ошибка, оболочка продолжает работу."""
     shell = make_shell()
     assert not shell.execute("exit abc")
     assert shell.running

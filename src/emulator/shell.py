@@ -22,15 +22,18 @@ def short_hostname():
 class Shell:
     """Эмулятор командной оболочки UNIX-подобной ОС."""
 
-    def __init__(self, env=None, out=None, err=None, config=None):
+    def __init__(self, env=None, out=None, err=None, config=None,
+                 vfs=None):
         """Создать оболочку.
 
-        ``env`` — переменные окружения (по умолчанию — реальные из ОС),
-        ``out`` и ``err`` — потоки для вывода и сообщений об ошибках,
-        ``config`` — параметры запуска эмулятора.
+        ``env`` - переменные окружения (по умолчанию - реальные из ОС),
+        ``out`` и ``err`` - потоки для вывода и сообщений об ошибках,
+        ``config`` - параметры запуска эмулятора,
+        ``vfs`` - корневой узел виртуальной файловой системы.
         """
         self.env = dict(os.environ) if env is None else env
         self.config = config
+        self.vfs = vfs
         self.out = out if out is not None else sys.stdout
         self.err = err if err is not None else sys.stderr
         self.user = getpass.getuser()
@@ -91,9 +94,9 @@ class Shell:
         return False
 
     def run_repl(self, read_line=input):
-        """Запустить интерактивный цикл «чтение — выполнение — вывод».
+        """Запустить интерактивный цикл «чтение - выполнение - вывод».
 
-        ``read_line`` — функция чтения строки с приглашением.
+        ``read_line`` - функция чтения строки с приглашением.
         Возвращает код завершения эмулятора.
         """
         while self.running:
