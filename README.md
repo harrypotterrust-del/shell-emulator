@@ -45,6 +45,17 @@
 - стартовый скрипт `startup/stage4_all.txt` проверяет все режимы
   команд и все виды ошибок на демонстрационной VFS.
 
+Этап 5 (дополнительные команды) - команда, изменяющая VFS:
+
+- `rm` удаляет файлы и папки (`-r`, `-d`, `-f`, `-v`);
+- все изменения делаются только в оперативной памяти: исходная
+  директория на диске не затрагивается, после перезапуска эмулятора
+  VFS снова полная;
+- `rm` отказывается удалять корень, `.` и `..`, а также текущую папку
+  и её родителей;
+- стартовый скрипт `startup/stage5_all.txt` проверяет все режимы и
+  все виды ошибок на VFS `rm_demo`.
+
 ## Виртуальная файловая система
 
 | Свойство | Значение |
@@ -67,6 +78,7 @@
 | `flat/` | несколько файлов в одной папке, включая двоичный |
 | `deep/` | четыре уровня папок и файлов |
 | `demo/` | для этапа 4: скрытый файл, повторы в `log.txt`, 12 строк в `numbers.txt`, папки `docs/notes/2026` |
+| `rm_demo/` | для этапа 5: файлы, скрытый файл и четыре папки разной глубины, которые удаляются по очереди |
 
 ## Параметры командной строки
 
@@ -108,6 +120,7 @@ Script: startup/stage2_ok.txt
 | `startup/stage2_exit.txt` | `exit` прерывает выполнение скрипта |
 | `startup/stage3_all.txt` | команды этапов 1-3, работа с VFS и все виды ошибок |
 | `startup/stage4_all.txt` | все режимы `ls`, `cd`, `head`, `uniq`, работа с VFS и ошибки |
+| `startup/stage5_all.txt` | все режимы `rm`, изменение VFS в памяти и ошибки |
 
 ## Скрипты реальной ОС
 
@@ -128,6 +141,7 @@ Script: startup/stage2_ok.txt
 | `run_vfs_missing.sh` | ошибка: директории не существует |
 | `run_vfs_not_dir.sh` | ошибка: вместо каталога указан файл |
 | `run_stage4.sh` | этап 4: VFS `demo` и скрипт `stage4_all.txt` |
+| `run_stage5.sh` | этап 5: VFS `rm_demo`, скрипт `stage5_all.txt`, затем список файлов на диске |
 
 ## Команды и настройки
 
@@ -137,6 +151,7 @@ Script: startup/stage2_ok.txt
 | `cd [путь]` | сменить текущую папку; без пути - в корень, `cd -` - в прошлую |
 | `head [-n N \| -c N] файл...` | первые строки (по умолчанию 10) или байты файлов |
 | `uniq [-c] [-d] [-u] [-i] файл` | убрать подряд идущие повторы строк |
+| `rm [-r] [-f] [-v] [-d] путь...` | удаляет файлы и папки из VFS (только в памяти) |
 | `exit [код]` | завершает работу с кодом (по умолчанию 0); код должен быть числом |
 | `vfs-tree` | служебная команда: выводит дерево загруженной VFS |
 
@@ -156,6 +171,11 @@ Script: startup/stage2_ok.txt
 | `uniq -d` | только строки, которые повторяются |
 | `uniq -u` | только строки, которые не повторяются |
 | `uniq -i` | регистр букв не различается |
+| `rm путь...` | удаляет файлы; папку без `-r` и `-d` не удаляет (`Is a directory`) |
+| `rm -r` (`-R`) | удаляет папку вместе со всем содержимым |
+| `rm -d` | удаляет пустую папку; непустую не трогает (`Directory not empty`) |
+| `rm -f` | отсутствующий путь не считается ошибкой; `rm -f` без путей успешно ничего не делает |
+| `rm -v` | печатает `removed 'путь'` и `removed directory 'путь'`, вложенное раньше папки |
 
 Опции можно записывать слитно (`ls -la`), ставить после операндов
 (`head файл -n 2`); после `--` всё считается операндами. Обработка
@@ -170,7 +190,7 @@ Script: startup/stage2_ok.txt
 | `/docs`, `~/docs` | от корня VFS; корень одновременно домашняя папка |
 | `.`, `..` | текущая папка, родитель; выше корня подняться нельзя |
 
-Принятые решения этапа:
+Принятые решения этапов 4 и 5:
 
 - вывод `ls` по одному имени в строке (как `ls -1`), порядок по имени;
 - прав доступа и дат в VFS нет, поэтому `ls -l` показывает только
@@ -182,7 +202,17 @@ Script: startup/stage2_ok.txt
 - если VFS не загружена (параметр не задан или была ошибка загрузки),
   команды работают с пустым корнем: `ls -a` покажет только `.` и `..`;
 - сообщения об ошибках команд такие же, как у GNU-утилит
-  (`No such file or directory`, `Not a directory`, `Is a directory`).
+  (`No such file or directory`, `Not a directory`, `Is a directory`);
+- `rm` изменяет только дерево в памяти; чтобы вернуть удалённое,
+  достаточно перезапустить эмулятор;
+- `rm` не удаляет корень VFS, `.` и `..`, а также текущую папку и всех
+  её родителей: оболочка осталась бы в несуществующем месте. Это
+  правило действует и с `-f`;
+- `rm` обрабатывает операнды по очереди: ошибка одного не отменяет
+  удаление остальных, `rm -r docs docs/a.txt` сообщит об отсутствии
+  второго пути, так как он уже удалён вместе с `docs`;
+- запроса подтверждения (`-i`) нет, `-f` лишь молчит об отсутствующих
+  путях.
 
 Правила разбора строки:
 
@@ -333,6 +363,57 @@ aleksandr@MacBook-Air:~$ head -n 1 -c 1 numbers.txt
 head: can't combine line and byte counts
 startup/stage4_all.txt:69: строка пропущена
 ```
+
+Стартовый скрипт этапа 5 (`./scripts/run_stage5.sh`), фрагменты; после
+выхода из эмулятора скрипт печатает список файлов на диске:
+
+```text
+=== Параметры эмулятора ===
+VFS:    vfs_examples/rm_demo
+Script: startup/stage5_all.txt
+===========================
+VFS загружена: корень 'rm_demo', папок: 6, файлов: 9, байт: 251
+aleksandr@MacBook-Air:~$ rm old.txt
+aleksandr@MacBook-Air:~$ rm -v .cache
+removed '.cache'
+aleksandr@MacBook-Air:~$ rm logs
+rm: cannot remove 'logs': Is a directory
+startup/stage5_all.txt:17: строка пропущена
+aleksandr@MacBook-Air:~$ rm -d logs
+rm: cannot remove 'logs': Directory not empty
+startup/stage5_all.txt:18: строка пропущена
+aleksandr@MacBook-Air:~$ rm -rf /
+rm: refusing to remove the root directory '/'
+startup/stage5_all.txt:24: строка пропущена
+aleksandr@MacBook-Air:~$ cd logs/2026
+aleksandr@MacBook-Air:~/logs/2026$ rm -rf /logs
+rm: cannot remove '/logs': it is or contains the current directory
+startup/stage5_all.txt:33: строка пропущена
+aleksandr@MacBook-Air:~/logs/2026$ cd
+aleksandr@MacBook-Air:~$ rm -v nope readme.txt logs
+removed 'readme.txt'
+rm: cannot remove 'nope': No such file or directory
+rm: cannot remove 'logs': Is a directory
+startup/stage5_all.txt:38: строка пропущена
+aleksandr@MacBook-Air:~$ rm -rv logs
+removed 'logs/2026/feb.log'
+removed 'logs/2026/jan.log'
+removed directory 'logs/2026'
+removed directory 'logs'
+aleksandr@MacBook-Air:~$ rm -rf work nope
+aleksandr@MacBook-Air:~$ vfs-tree
+rm_demo/
+aleksandr@MacBook-Air:~$ exit
+
+vfs_examples/rm_demo
+vfs_examples/rm_demo/.cache
+vfs_examples/rm_demo/cache
+vfs_examples/rm_demo/cache/index.txt
+vfs_examples/rm_demo/logs
+...
+```
+
+В конце сценария VFS в памяти пуста, а на диске все файлы на месте.
 
 Выполнение стартового скрипта (`./scripts/run_all.sh`): ошибочные
 строки пропускаются, выполнение продолжается.

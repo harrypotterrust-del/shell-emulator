@@ -4,11 +4,13 @@
 экземпляр оболочки и список аргументов, возвращает текст для вывода
 (``None`` - выводить нечего). Об ошибке команда сообщает исключением
 ``CommandError``. Команды ``ls`` и ``cd`` находятся в модуле
-``navigation``, ``head`` и ``uniq`` - в модуле ``textcmds``.
+``navigation``, ``head`` и ``uniq`` - в модуле ``textcmds``, ``rm`` - в
+модуле ``removal``.
 """
 
 from emulator.errors import CommandError, ExitRequest
 from emulator.navigation import cmd_cd, cmd_ls
+from emulator.removal import cmd_rm
 from emulator.textcmds import cmd_head, cmd_uniq
 from emulator.vfs import format_tree
 
@@ -44,6 +46,7 @@ COMMANDS = {
     "cd": cmd_cd,
     "head": cmd_head,
     "uniq": cmd_uniq,
+    "rm": cmd_rm,
     "exit": cmd_exit,
     "vfs-tree": cmd_vfs_tree,
 }

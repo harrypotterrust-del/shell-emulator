@@ -1,0 +1,56 @@
+# Этап 5: команда rm.
+# Запуск: ./scripts/run_stage5.sh (VFS: vfs_examples/rm_demo).
+# Все удаления выполняются только в памяти: файлы на диске остаются.
+# Шаги идут по порядку, потому что VFS меняется по ходу сценария.
+
+# --- Исходное состояние ---
+vfs-tree
+ls -la
+
+# --- Удаление файлов: молча, с -v, скрытый файл ---
+rm old.txt
+ls
+rm -v .cache
+ls -a
+
+# --- Ошибки, пока дерево целое ---
+rm logs
+rm -d logs
+rm nope
+rm readme.txt/x
+rm .
+rm ..
+rm logs/..
+rm -rf /
+rm -r ~
+rm
+rm -z readme.txt
+rm --force readme.txt
+
+# --- Отказ для текущей папки и её родителей ---
+cd logs/2026
+rm -r ~/logs/2026
+rm -rf /logs
+rm -r ../../logs
+cd
+
+# --- Несколько операндов: ошибки не отменяют удаление остальных ---
+rm -v nope readme.txt logs
+
+# --- -f: отсутствующие пути без ошибок ---
+rm -f nope
+rm -f
+rm -fv nope logs/app.log
+
+# --- -d: только пустая папка ---
+rm -v tmp/scratch.txt
+rm -dv tmp
+
+# --- -r и -R: папка вместе с содержимым ---
+rm -R cache
+rm -rv logs
+rm -rf work nope
+
+# --- Итог ---
+vfs-tree
+ls -a
