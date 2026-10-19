@@ -75,7 +75,7 @@
 | Папка | Содержимое |
 |---|---|
 | `minimal/` | один файл в корне |
-| `flat/` | несколько файлов в одной папке, включая двоичный |
+| `flat/` | несколько файлов в одной папке |
 | `deep/` | четыре уровня папок и файлов |
 | `demo/` | для этапа 4: скрытый файл, повторы в `log.txt`, 12 строк в `numbers.txt`, папки `docs/notes/2026` |
 | `rm_demo/` | для этапа 5: файлы, скрытый файл и четыре папки разной глубины, которые удаляются по очереди |
@@ -374,8 +374,8 @@ Script: startup/stage5_all.txt
 ===========================
 VFS загружена: корень 'rm_demo', папок: 6, файлов: 9, байт: 251
 aleksandr@MacBook-Air:~$ rm old.txt
-aleksandr@MacBook-Air:~$ rm -v .cache
-removed '.cache'
+aleksandr@MacBook-Air:~$ rm -v .hidden
+removed '.hidden'
 aleksandr@MacBook-Air:~$ rm logs
 rm: cannot remove 'logs': Is a directory
 startup/stage5_all.txt:17: строка пропущена
@@ -406,9 +406,9 @@ rm_demo/
 aleksandr@MacBook-Air:~$ exit
 
 vfs_examples/rm_demo
-vfs_examples/rm_demo/.cache
-vfs_examples/rm_demo/cache
-vfs_examples/rm_demo/cache/index.txt
+vfs_examples/rm_demo/.hidden
+vfs_examples/rm_demo/data
+vfs_examples/rm_demo/data/index.txt
 vfs_examples/rm_demo/logs
 ...
 ```
@@ -470,7 +470,7 @@ deep/
 |-- docs/
 |   |-- guide.txt (49 Б)
 |   |-- images/
-|   |   `-- logo.bin (8 Б)
+|   |   `-- logo.txt (8 Б)
 |   `-- notes/
 |       `-- 2026/
 |           `-- plan.txt (65 Б)

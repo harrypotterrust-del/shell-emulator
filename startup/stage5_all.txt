@@ -10,7 +10,7 @@ ls -la
 # --- Удаление файлов: молча, с -v, скрытый файл ---
 rm old.txt
 ls
-rm -v .cache
+rm -v .hidden
 ls -a
 
 # --- Ошибки, пока дерево целое ---
@@ -47,7 +47,7 @@ rm -v tmp/scratch.txt
 rm -dv tmp
 
 # --- -r и -R: папка вместе с содержимым ---
-rm -R cache
+rm -R data
 rm -rv logs
 rm -rf work nope
 
