@@ -1,45 +1,19 @@
 """Встроенные команды эмулятора.
 
-Каждая команда - функция ``(shell, args) -> str``: получает экземпляр
-оболочки и список аргументов, возвращает текст для вывода. Об ошибке
-команда сообщает исключением ``CommandError``.
+Каждая команда - функция ``(shell, args) -> Optional[str]``: получает
+экземпляр оболочки и список аргументов, возвращает текст для вывода
+(``None`` - выводить нечего). Об ошибке команда сообщает исключением
+``CommandError``. Команды ``ls`` и ``cd`` находятся в модуле
+``navigation``, ``head`` и ``uniq`` - в модуле ``textcmds``.
 """
 
+from emulator.errors import CommandError, ExitRequest
+from emulator.navigation import cmd_cd, cmd_ls
+from emulator.textcmds import cmd_head, cmd_uniq
 from emulator.vfs import format_tree
 
-MAX_CD_ARGS = 1
 MAX_EXIT_ARGS = 1
 EXIT_CODE_LIMIT = 256
-
-
-class CommandError(Exception):
-    """Ошибка выполнения команды (например, неверные аргументы)."""
-
-
-class ExitRequest(Exception):
-    """Запрос на завершение работы эмулятора с кодом возврата."""
-
-    def __init__(self, code):
-        """Сохранить код возврата ``code``."""
-        super().__init__(code)
-        self.code = code
-
-
-def format_stub(name, args):
-    """Сформировать вывод команды-заглушки: имя и список аргументов."""
-    return f"{name}: args={args!r}"
-
-
-def cmd_ls(shell, args):
-    """Заглушка ``ls``: вывести имя команды и аргументы."""
-    return format_stub("ls", args)
-
-
-def cmd_cd(shell, args):
-    """Заглушка ``cd``: проверить число аргументов и вывести их."""
-    if len(args) > MAX_CD_ARGS:
-        raise CommandError("too many arguments")
-    return format_stub("cd", args)
 
 
 def cmd_exit(shell, args):
@@ -68,6 +42,8 @@ def cmd_vfs_tree(shell, args):
 COMMANDS = {
     "ls": cmd_ls,
     "cd": cmd_cd,
+    "head": cmd_head,
+    "uniq": cmd_uniq,
     "exit": cmd_exit,
     "vfs-tree": cmd_vfs_tree,
 }

@@ -20,11 +20,12 @@ def test_prompt_format():
     assert shell.prompt() == f"{shell.user}@{shell.host}:~$ "
 
 
-def test_stub_prints_name_and_args():
-    """Заглушка выводит имя и аргументы с раскрытыми переменными."""
+def test_variables_are_expanded_before_command():
+    """Команда получает аргументы с уже раскрытыми переменными."""
     shell = make_shell()
-    assert shell.execute("ls -l $HOME")
-    assert shell.out.getvalue() == "ls: args=['-l', '/Users/test']\n"
+    assert not shell.execute("ls $HOME")
+    assert shell.err.getvalue() == (
+        "ls: cannot access '/Users/test': No such file or directory\n")
 
 
 def test_unknown_command():
@@ -67,10 +68,10 @@ def test_exit_bad_argument():
 
 def test_repl_runs_until_exit():
     """REPL выполняет команды по очереди до exit."""
-    lines = iter(["ls a", "nope", f"exit {CUSTOM_CODE}", "ls never"])
+    lines = iter(["ls -a", "nope", f"exit {CUSTOM_CODE}", "ls -l"])
     shell = make_shell()
     assert shell.run_repl(lambda prompt: next(lines)) == CUSTOM_CODE
-    assert shell.out.getvalue() == "ls: args=['a']\n"
+    assert shell.out.getvalue() == ".\n..\n"
     assert shell.err.getvalue() == "nope: command not found\n"
 
 

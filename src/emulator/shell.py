@@ -5,13 +5,15 @@ import os
 import socket
 import sys
 
-from emulator.commands import COMMANDS, CommandError, ExitRequest
+from emulator.commands import COMMANDS
+from emulator.errors import CommandError, ExitRequest
 from emulator.parser import ParseError, parse
+from emulator.paths import format_cwd
+from emulator.vfs import Node
 
 EXIT_SUCCESS = 0
 EXIT_FAILURE = 1
 EXIT_NOT_FOUND = 127
-HOME_MARK = "~"
 
 
 def short_hostname():
@@ -29,22 +31,35 @@ class Shell:
         ``env`` - переменные окружения (по умолчанию - реальные из ОС),
         ``out`` и ``err`` - потоки для вывода и сообщений об ошибках,
         ``config`` - параметры запуска эмулятора,
-        ``vfs`` - корневой узел виртуальной файловой системы.
+        ``vfs`` - корневой узел виртуальной файловой системы; пока она
+        не загружена, команды работают с пустым корнем.
         """
         self.env = dict(os.environ) if env is None else env
         self.config = config
         self.vfs = vfs
+        self.blank = Node(name="", is_dir=True)
         self.out = out if out is not None else sys.stdout
         self.err = err if err is not None else sys.stderr
         self.user = getpass.getuser()
         self.host = short_hostname()
-        self.cwd = HOME_MARK
+        self.cwd = ()
+        self.oldpwd = None
         self.running = True
         self.last_status = EXIT_SUCCESS
 
+    @property
+    def root(self):
+        """Корень файловой системы: загруженная VFS или пустая папка."""
+        return self.vfs if self.vfs is not None else self.blank
+
     def prompt(self):
-        """Сформировать приглашение вида ``user@host:~$``."""
-        return f"{self.user}@{self.host}:{self.cwd}$ "
+        """Сформировать приглашение вида ``user@host:~/docs$``."""
+        return f"{self.user}@{self.host}:{format_cwd(self.cwd)}$ "
+
+    def change_dir(self, names):
+        """Сделать текущей папку ``names``, запомнив прежнюю (``cd -``)."""
+        self.oldpwd = self.cwd
+        self.cwd = tuple(names)
 
     def write(self, text):
         """Вывести текст команды в стандартный вывод."""
@@ -77,12 +92,16 @@ class Shell:
         try:
             output = command(self, args)
         except CommandError as exc:
-            return self.fail(f"{name}: {exc}", EXIT_FAILURE)
+            if exc.output is not None:
+                self.write(exc.output)
+            lines = str(exc).splitlines()
+            return self.fail("\n".join(f"{name}: {line}" for line in lines),
+                             EXIT_FAILURE)
         except ExitRequest as exc:
             self.running = False
             self.last_status = exc.code
             return True
-        if output:
+        if output is not None:
             self.write(output)
         self.last_status = EXIT_SUCCESS
         return True

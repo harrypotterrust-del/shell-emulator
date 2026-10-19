@@ -35,6 +35,16 @@
 - служебная команда `vfs-tree` показывает загруженное дерево;
 - после загрузки выводится сводка: число папок, файлов и байт.
 
+Этап 4 (основные команды) - команды работают с VFS в памяти:
+
+- `ls` и `cd` стали настоящими: пути, `.`, `..`, `~`, режимы `-a`,
+  `-l`, `-R`, возврат `cd -`; приглашение показывает текущую папку;
+- новые команды `head` (начало файла) и `uniq` (повторы подряд);
+- ошибки сообщаются в стиле UNIX: нет такого файла, не каталог,
+  неверная опция, лишний операнд;
+- стартовый скрипт `startup/stage4_all.txt` проверяет все режимы
+  команд и все виды ошибок на демонстрационной VFS.
+
 ## Виртуальная файловая система
 
 | Свойство | Значение |
@@ -56,6 +66,7 @@
 | `minimal/` | один файл в корне |
 | `flat/` | несколько файлов в одной папке, включая двоичный |
 | `deep/` | четыре уровня папок и файлов |
+| `demo/` | для этапа 4: скрытый файл, повторы в `log.txt`, 12 строк в `numbers.txt`, папки `docs/notes/2026` |
 
 ## Параметры командной строки
 
@@ -95,7 +106,8 @@ Script: startup/stage2_ok.txt
 | `startup/stage2_ok.txt` | только корректные команды |
 | `startup/stage2_errors.txt` | ошибочные строки пропускаются |
 | `startup/stage2_exit.txt` | `exit` прерывает выполнение скрипта |
-| `startup/stage3_all.txt` | все команды этапов 1-3 и все виды ошибок |
+| `startup/stage3_all.txt` | команды этапов 1-3, работа с VFS и все виды ошибок |
+| `startup/stage4_all.txt` | все режимы `ls`, `cd`, `head`, `uniq`, работа с VFS и ошибки |
 
 ## Скрипты реальной ОС
 
@@ -115,15 +127,62 @@ Script: startup/stage2_ok.txt
 | `run_vfs_deep.sh` | четыре уровня папок и файлов |
 | `run_vfs_missing.sh` | ошибка: директории не существует |
 | `run_vfs_not_dir.sh` | ошибка: вместо каталога указан файл |
+| `run_stage4.sh` | этап 4: VFS `demo` и скрипт `stage4_all.txt` |
 
 ## Команды и настройки
 
 | Команда | Описание |
 |---|---|
-| `ls [аргументы...]` | заглушка: выводит имя команды и аргументы |
-| `cd [путь]` | заглушка: выводит имя и аргумент; больше одного аргумента - ошибка |
+| `ls [-a] [-l] [-R] [путь...]` | содержимое папок и сведения о файлах |
+| `cd [путь]` | сменить текущую папку; без пути - в корень, `cd -` - в прошлую |
+| `head [-n N \| -c N] файл...` | первые строки (по умолчанию 10) или байты файлов |
+| `uniq [-c] [-d] [-u] [-i] файл` | убрать подряд идущие повторы строк |
 | `exit [код]` | завершает работу с кодом (по умолчанию 0); код должен быть числом |
 | `vfs-tree` | служебная команда: выводит дерево загруженной VFS |
+
+Режимы команд:
+
+| Режим | Что делает |
+|---|---|
+| `ls -a` | показывает скрытые записи (имя с точки), а также `.` и `..` |
+| `ls -l` | тип (`d` - папка, `-` - файл), размер в байтах, имя; у папок размер 0 |
+| `ls -R` | рекурсивно обходит подпапки, перед каждой печатает `путь:` |
+| `ls путь...` | для файла выводит его путь, для папки - содержимое; если путей несколько, у папок печатаются заголовки |
+| `cd -` | возвращает в прошлую папку и печатает её путь |
+| `head -n N` | первые `N` строк (`-n3` и `-n 3` равнозначны) |
+| `head -c N` | первые `N` байтов; вместе с `-n` использовать нельзя |
+| `head файл1 файл2` | перед каждым файлом печатается заголовок `==> имя <==` |
+| `uniq -c` | перед строкой печатается число повторов |
+| `uniq -d` | только строки, которые повторяются |
+| `uniq -u` | только строки, которые не повторяются |
+| `uniq -i` | регистр букв не различается |
+
+Опции можно записывать слитно (`ls -la`), ставить после операндов
+(`head файл -n 2`); после `--` всё считается операндами. Обработка
+нескольких операндов продолжается после ошибки одного из них:
+успешный вывод печатается, ошибки идут в поток ошибок, код возврата 1.
+
+Пути в VFS:
+
+| Запись | Значение |
+|---|---|
+| `docs/notes` | от текущей папки |
+| `/docs`, `~/docs` | от корня VFS; корень одновременно домашняя папка |
+| `.`, `..` | текущая папка, родитель; выше корня подняться нельзя |
+
+Принятые решения этапа:
+
+- вывод `ls` по одному имени в строке (как `ls -1`), порядок по имени;
+- прав доступа и дат в VFS нет, поэтому `ls -l` показывает только
+  тип и размер;
+- `head` и `uniq` без файла не читают стандартный ввод (конвейеров
+  в эмуляторе нет), а сообщают `missing file operand`;
+- двоичные данные выводятся как текст UTF-8, нечитаемые байты
+  заменяются на символ замены;
+- если VFS не загружена (параметр не задан или была ошибка загрузки),
+  команды работают с пустым корнем: `ls -a` покажет только `.` и `..`;
+- сообщения об ошибках команд такие же, как у GNU-утилит
+  (`No such file or directory`, `Not a directory`, `Is a directory`).
 
 Правила разбора строки:
 
@@ -150,22 +209,129 @@ make lint     # проверка стиля flake8
 
 ## Примеры использования
 
+Интерактивная работа с VFS `vfs_examples/demo` (`./run.sh --vfs
+vfs_examples/demo`):
+
 ```text
-aleksandr@MacBook-Air:~$ ls -l $HOME
-ls: args=['-l', '/Users/aleksandr']
-aleksandr@MacBook-Air:~$ cd "my folder"
-cd: args=['my folder']
-aleksandr@MacBook-Air:~$ ls '$HOME' "${USER} files"
-ls: args=['$HOME', 'aleksandr files']
+aleksandr@MacBook-Air:~$ ls
+docs
+log.txt
+numbers.txt
+aleksandr@MacBook-Air:~$ ls -l
+d   0 docs
+-  75 log.txt
+- 192 numbers.txt
+aleksandr@MacBook-Air:~$ cd docs/notes
+aleksandr@MacBook-Air:~/docs/notes$ ls -R ..
+..:
+notes
+readme.txt
+
+../notes:
+2026
+todo.txt
+
+../notes/2026:
+plan.txt
+aleksandr@MacBook-Air:~/docs/notes$ head -n 1 todo.txt
+проверить ls
+aleksandr@MacBook-Air:~/docs/notes$ cd -
+~
+aleksandr@MacBook-Air:~$ uniq -c log.txt
+      2 INFO start
+      1 INFO ready
+      1 warn disk
+      1 WARN disk
+      1 INFO ready
+      1 ERROR fail
+aleksandr@MacBook-Air:~$ uniq -di log.txt
+INFO start
+warn disk
+aleksandr@MacBook-Air:~$ head -n 2 log.txt docs/readme.txt
+==> log.txt <==
+INFO start
+INFO start
+
+==> docs/readme.txt <==
+Демонстрационная VFS для этапа 4.
+```
+
+Ошибки (команда сообщает о них и возвращает код 1, оболочка
+продолжает работу):
+
+```text
+aleksandr@MacBook-Air:~$ ls missing
+ls: cannot access 'missing': No such file or directory
+aleksandr@MacBook-Air:~$ cd log.txt
+cd: log.txt: Not a directory
+aleksandr@MacBook-Air:~$ head docs
+head: error reading 'docs': Is a directory
+aleksandr@MacBook-Air:~$ head -n abc numbers.txt
+head: invalid number of lines: 'abc'
+aleksandr@MacBook-Air:~$ uniq log.txt numbers.txt
+uniq: extra operand 'numbers.txt'
+aleksandr@MacBook-Air:~$ ls -l log.txt missing docs
+- 75 log.txt
+
+docs:
+d  0 notes
+- 58 readme.txt
+ls: cannot access 'missing': No such file or directory
+aleksandr@MacBook-Air:~$ ls -z
+ls: invalid option -- 'z'
 aleksandr@MacBook-Air:~$ cd a b
 cd: too many arguments
 aleksandr@MacBook-Air:~$ foo
 foo: command not found
 aleksandr@MacBook-Air:~$ ls "abc
 syntax error: unexpected EOF while looking for matching `"'
+aleksandr@MacBook-Air:~$ ls $HOME
+ls: cannot access '/Users/aleksandr': No such file or directory
 aleksandr@MacBook-Air:~$ exit abc
 exit: abc: numeric argument required
 aleksandr@MacBook-Air:~$ exit
+```
+
+Последняя пара строк показывает раскрытие переменных: команда
+получила уже подставленный путь `$HOME`, которого нет в VFS.
+
+Стартовый скрипт этапа 4 (`./scripts/run_stage4.sh`) выполняет все
+режимы команд подряд; многоточие означает пропущенные строки:
+
+```text
+=== Параметры эмулятора ===
+VFS:    vfs_examples/demo
+Script: startup/stage4_all.txt
+===========================
+VFS загружена: корень 'demo', папок: 3, файлов: 6, байт: 454
+aleksandr@MacBook-Air:~$ ls -la docs
+d  0 .
+d  0 ..
+d  0 notes
+- 58 readme.txt
+...
+aleksandr@MacBook-Air:~/docs$ cd notes/2026
+aleksandr@MacBook-Air:~/docs/notes/2026$ ls -l
+- 26 plan.txt
+aleksandr@MacBook-Air:~/docs/notes/2026$ cd ../..
+aleksandr@MacBook-Air:~/docs$ cd -
+~/docs/notes/2026
+...
+aleksandr@MacBook-Air:~$ head -c 25 log.txt
+INFO start
+INFO start
+INF
+...
+aleksandr@MacBook-Air:~$ uniq -ci log.txt
+      2 INFO start
+      1 INFO ready
+      2 warn disk
+      1 INFO ready
+      1 ERROR fail
+...
+aleksandr@MacBook-Air:~$ head -n 1 -c 1 numbers.txt
+head: can't combine line and byte counts
+startup/stage4_all.txt:69: строка пропущена
 ```
 
 Выполнение стартового скрипта (`./scripts/run_all.sh`): ошибочные
@@ -176,28 +342,34 @@ aleksandr@MacBook-Air:~$ exit
 VFS:    vfs_examples/minimal
 Script: startup/stage2_errors.txt
 ===========================
-aleksandr@MacBook-Air:~$ ls начало
-ls: args=['начало']
+VFS загружена: корень 'minimal', папок: 0, файлов: 1, байт: 212
+aleksandr@MacBook-Air:~$ ls -l
+- 212 readme.txt
 aleksandr@MacBook-Air:~$ foo bar
 foo: command not found
 startup/stage2_errors.txt:3: строка пропущена
+aleksandr@MacBook-Air:~$ cd /
 aleksandr@MacBook-Air:~$ cd a b
 cd: too many arguments
 startup/stage2_errors.txt:5: строка пропущена
-aleksandr@MacBook-Air:~$ ls конец
-ls: args=['конец']
+aleksandr@MacBook-Air:~$ ls -a
+.
+..
+readme.txt
 aleksandr@MacBook-Air:~$
 ```
 
 Скрипт с командой `exit` (`./scripts/run_exit_script.sh`):
 
 ```text
-aleksandr@MacBook-Air:~$ ls до выхода
-ls: args=['до', 'выхода']
+aleksandr@MacBook-Air:~$ ls -a
+.
+..
+readme.txt
 aleksandr@MacBook-Air:~$ exit 0
 ```
 
-Строка `ls после выхода` не выполняется, REPL не открывается.
+Строка `ls -l` после `exit` не выполняется, REPL не открывается.
 
 Загрузка многоуровневой VFS (`./scripts/run_vfs_deep.sh`):
 
@@ -207,6 +379,11 @@ VFS:    vfs_examples/deep
 Script: startup/stage3_all.txt
 ===========================
 VFS загружена: корень 'deep', папок: 5, файлов: 5, байт: 230
+aleksandr@MacBook-Air:~$ ls $NOPE
+docs
+readme.txt
+src
+...
 aleksandr@MacBook-Air:~$ vfs-tree
 deep/
 |-- docs/
@@ -228,5 +405,5 @@ vfs: vfs_examples/minimal/readme.txt: источник VFS должен быть
 aleksandr@MacBook-Air:~$
 ```
 
-Эмулятор продолжает работу без VFS, команда `vfs-tree` сообщит
-`vfs-tree: VFS не загружена`.
+Эмулятор продолжает работу без VFS (с пустым корнем), команда
+`vfs-tree` сообщит `vfs-tree: VFS не загружена`.

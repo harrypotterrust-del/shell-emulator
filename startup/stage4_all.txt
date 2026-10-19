@@ -1,0 +1,82 @@
+# Этап 4: основные команды ls, cd, head, uniq.
+# Запуск: ./scripts/run_stage4.sh (VFS: vfs_examples/demo).
+# Скрипт проверяет все режимы команд этапов 1-4 и обработку ошибок.
+
+# --- ls: режимы -a, -l, -R, пути, несколько путей ---
+ls
+ls -a
+ls -l
+ls -la docs
+ls -R
+ls docs/notes
+ls /docs
+ls log.txt
+ls -l log.txt docs
+ls docs docs/notes
+
+# --- cd: относительные и абсолютные пути, .., ~, cd - ---
+cd docs
+ls
+cd notes/2026
+ls -l
+cd ../..
+cd -
+cd ~/docs/notes
+cd /
+cd docs
+cd
+cd -
+cd
+
+# --- head: 10 строк по умолчанию, -n, -c, несколько файлов ---
+head numbers.txt
+head -n 3 numbers.txt
+head -n3 numbers.txt
+head -n 0 numbers.txt
+head -c 25 log.txt
+head -n 2 log.txt docs/readme.txt
+cd docs/notes
+head -n 1 todo.txt ../readme.txt
+cd
+
+# --- uniq: подряд идущие строки, -c, -d, -u, -i ---
+uniq log.txt
+uniq -c log.txt
+uniq -d log.txt
+uniq -u log.txt
+uniq -i log.txt
+uniq -ci log.txt
+uniq -di log.txt
+
+# --- Ошибки ls и cd ---
+ls missing
+ls log.txt/inner
+ls -z
+ls --all
+ls -l log.txt missing docs
+cd missing
+cd log.txt
+cd a b
+cd -z
+
+# --- Ошибки head ---
+head
+head missing
+head docs
+head -n abc numbers.txt
+head -n -3 numbers.txt
+head -n
+head -n 1 -c 1 numbers.txt
+head -z numbers.txt
+head -n 1 log.txt missing docs
+
+# --- Ошибки uniq ---
+uniq
+uniq missing
+uniq docs
+uniq log.txt numbers.txt
+uniq -z log.txt
+
+# --- Ошибки разбора и неизвестные команды ---
+foo bar
+ls 'незакрытая кавычка

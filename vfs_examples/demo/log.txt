@@ -1,0 +1,7 @@
+INFO start
+INFO start
+INFO ready
+warn disk
+WARN disk
+INFO ready
+ERROR fail
